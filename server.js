@@ -1,57 +1,48 @@
-const express = require("express");
-const bodyParser = require("body-parser");
+const express = require('express');
+const bodyParser = require('body-parser');
+const path = require('path');
 
 const app = express();
 
-app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-// Store registered email IDs in an array
-const registeredEmails = [];
-
-app.get("/", function (req, res) {
-    res.sendFile(__dirname + "/login.html");
+// Database or user data storage
+const users = [
+    {
+        email: 'user1@example.com',
+        password: 'password1',
+    },
+    {
+        email: 'user2@example.com',
+        password: 'password2',
+    },
+];
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'login.html'));
 });
 
-app.post("/login", function (req, res) {
-    // Retrieve login credentials
-    const email = req.body.email;
-    const password = req.body.password;
+app.post('/login', (req, res) => {
+    const { email, password } = req.body;
 
-    // Check if the email is registered
-    if (registeredEmails.includes(email)) {
-        return res.json({ success: false, message: "Email already registered. Please login instead." });
+    // Check if the user with the given email exists
+    const user = users.find((user) => user.email === email);
+
+    if (!user) {
+        // User not found
+        return res.status(404).json({ message: 'User not found' });
     }
 
-    // Perform login logic here (e.g., validate credentials)
-
-    // Simulating a successful login
-    if (email === "example@example.com" && password === "password") {
-        res.json({ success: true, message: "Login successful!" });
-    } else {
-        res.json({ success: false, message: "Incorrect email or password." });
-    }
-});
-
-app.post("/signup", function (req, res) {
-    // Retrieve form data
-    const email = req.body.email;
-
-    // Check if the email is already registered
-    if (registeredEmails.includes(email)) {
-        return res.json({ success: false, message: "Email already registered." });
+    // Check if the password matches
+    if (user.password !== password) {
+        // Incorrect password
+        return res.status(401).json({ message: 'User not authorized' });
     }
 
-    // Add the email to the registeredEmails array
-    registeredEmails.push(email);
-
-    // Perform signup logic here (e.g., store user data in a database)
-
-    // Return a response to the client
-    res.json({ success: true, message: "Registered successfully. You can now login." });
+    // Login successful
+    return res.json({ message: 'User login successful' });
 });
 
 const port = 3000;
-app.listen(port, function () {
-    console.log(port);
+app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
 });
